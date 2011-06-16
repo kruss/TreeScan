@@ -14,7 +14,7 @@ public class TreeScan {
 	public static void main(String[] args) {
 		
 		if(args.length == 0){
-			print("args: [path <string>] {[resolution (B|<KB>|MB|GB)]} {[limit (int)]} {[full (true|<false>)]} {[verbose (true|<false>)]}");
+			print("args: [path (string)] {[resolution (B|<KB>|MB|GB)]} {[limit (int|<0>)]} {[full (true|<false>)]} {[verbose (true|<false>)]}");
 			System.exit(-1);
 		}else{
 			try{
