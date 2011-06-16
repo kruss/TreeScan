@@ -7,6 +7,6 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="TreeScan"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${workspace_loc}\TreeScan\test KB 1"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${workspace_loc}\TreeScan\test KB 10 false true"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="TreeScan"/>
 </launchConfiguration>

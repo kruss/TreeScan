@@ -1,11 +1,15 @@
 TreeScan is a java tool to list folders by size within a tree
 
-usage: java -jar TreeScan.jar [path (string)] <[resolution (B|KB|MB|GB)]> <[limit (int)]> <[full (boolean)]
+usage: java -jar TreeScan.jar [path <string>] {[resolution (B|<KB>|MB|GB)]} {[limit (int)]} {[full (true|<false>)]} {[verbose (true|<false>)]}
 
 where: 
 
-- path: 			the folder to scan for
-- resolution: 		the dimension of size for items being shown
-- limit: 			threshold for items being shown in resolution-units
-- full:				if true also '.'-folder will be scanned
+- path: 			the folder to scan
+- resolution: 		the dimension for items being scanned
+- limit: 			threshold for items being scanned in resolution-units
+- full:				if set '.'-folder will be scanned
+- verbose:			if set current folder is printed 
 
+eg:
+
+java -jar TreeScan.jar c: MB 100

@@ -6,7 +6,7 @@ import java.util.Collections;
 
 public class TreeScan {
 	
-	private static final String APP_NAME = TreeScan.class.getSimpleName()+" - 0.1.0";
+	private static final int MAX_LOG_DEPTH = 3;
 	private enum Resolution{
 		B, KB, MB, GB
 	}
@@ -14,7 +14,7 @@ public class TreeScan {
 	public static void main(String[] args) {
 		
 		if(args.length == 0){
-			print("args: [path (string)] <[resolution (B|KB|MB|GB)]> <[limit (int)]> <[full (boolean)]>");
+			print("args: [path <string>] {[resolution (B|<KB>|MB|GB)]} {[limit (int)]} {[full (true|<false>)]} {[verbose (true|<false>)]}");
 			System.exit(-1);
 		}else{
 			try{
@@ -22,6 +22,7 @@ public class TreeScan {
 				Resolution resolution = Resolution.KB;
 				long limit = 0;
 				boolean full = false;
+				boolean verbose = false;
 
 				if(args.length > 0){
 					folder = new File(args[0]);
@@ -50,21 +51,18 @@ public class TreeScan {
 				if(args.length > 3){
 					full = (new Boolean(args[3]).booleanValue());
 				}
+				if(args.length > 4){
+					verbose = (new Boolean(args[4]).booleanValue());
+				}
 
-				info(APP_NAME);
-				TreeScan scaner = new TreeScan(folder, resolution, limit, full);
+				TreeScan scaner = new TreeScan(folder, resolution, limit, full, verbose);
 				scaner.scan();
-				info("done");
 				System.exit(0);
 			}catch(Exception e){
 				e.printStackTrace();
 				System.exit(-1);
 			}
 		}
-	}
-
-	private static void info(String text) {
-		System.out.println("\n\t>>> "+text+" <<<\n");
 	}
 	
 	private static void print(String text) {
@@ -75,38 +73,41 @@ public class TreeScan {
 	private Resolution resolution;
 	private long limit;
 	private boolean full;
+	private boolean verbose;
 	
 	private ArrayList<ScanInfo> scans;
 
-	public TreeScan(File folder, Resolution resolution, long limit, boolean full){
+	public TreeScan(File folder, Resolution resolution, long limit, boolean full, boolean verbose){
 		this.folder = folder;
 		this.resolution = resolution;
 		this.limit = limit;
 		this.full = full;
+		this.verbose = verbose;
 		
 		scans = new ArrayList<ScanInfo>();
 	}
 	
 	private void scan() throws Exception {
-		print("scan: "+folder.getAbsolutePath()+(full ? " (full)" : ""));
-		scanFolder(folder);
+		
+		print("scan: "+folder.getAbsolutePath()+" >= "+limit+" "+resolution.toString()+(full ? " (full)" : ""));
+		scanFolder(folder, 0);
+		print("total: "+scans.size());
 		Collections.sort(scans);
 		for(int i=0; i<scans.size(); i++){
 			ScanInfo scan = scans.get(i);
 			long size = scan.size;
 			if(size >= (limit * getResolutionUnit())){
-				print(
-						getRelativePath(scan.path)+" => "+getResolutionValue(size)+" "+resolution.toString()+
-						" ("+scan.folders+" folders, "+scan.files+" files)"
-				);
+				print(getRelativePath(scan.path)+" => "+getResolutionValue(size)+" "+resolution.toString()+" ("+scan.folders+" folders, "+scan.files+" files)");
 			}else{
-				print("=> "+(scans.size() - (i+1))+" items below "+limit+" "+resolution.toString());
+				print((scans.size() - (i+1))+" more < "+limit+" "+resolution.toString());
 				break;
 			}
 		}
+		print("done.");
 	}
 
 	private String getRelativePath(String path) {
+		
 		if(path.equals(folder.getAbsolutePath())){
 			return "."+File.separator;
 		}else{
@@ -135,20 +136,26 @@ public class TreeScan {
 		throw new Exception("Undefined resolution: "+resolution.toString());
 	}
 
-	private ScanInfo scanFolder(File folder) throws Exception {
+	private ScanInfo scanFolder(File folder, int level) throws Exception {
+		
 		if(folder != null && folder.isDirectory()){
 			ScanInfo scan = new ScanInfo(folder);
+			if(verbose && level < MAX_LOG_DEPTH){
+				print(getRelativePath(scan.path));
+			}
 			for(File file : folder.listFiles()){
-				if(file.isDirectory() && (!file.getName().startsWith(".") || full)){
-					scan.folders++;
-					ScanInfo child = scanFolder(file);
-					scan.folders += child.folders;
-					scan.files += child.files;
-					scan.size += child.size;
-				}else{
-					long size = file.length();
-					scan.files++;
-					scan.size += size;
+				if(file != null){
+					if(file.isDirectory() && (full || !file.getName().startsWith("."))){
+						scan.folders++;
+						ScanInfo child = scanFolder(file, level+1);
+						scan.folders += child.folders;
+						scan.files += child.files;
+						scan.size += child.size;
+					}else{
+						long size = file.length();
+						scan.files++;
+						scan.size += size;
+					}
 				}
 			}
 			scans.add(scan);
