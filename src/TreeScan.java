@@ -6,6 +6,7 @@ import java.util.Collections;
 
 public class TreeScan {
 	
+	private static final String PROMPT = "$:";
 	private static final int MAX_LOG_DEPTH = 3;
 	private enum Resolution{
 		B, KB, MB, GB
@@ -89,23 +90,53 @@ public class TreeScan {
 	
 	private void scan() throws Exception {
 		
-		print("scan: "+folder.getAbsolutePath()+" >= "+limit+" "+resolution.toString()+(full ? " (full)" : ""));
+		print(PROMPT+" scan ["+folder.getAbsolutePath()+"]"+(full ? " (full)" : ""));
 		scanFolder(folder, 0);
-		print("total: "+scans.size());
+		print(PROMPT+" folder(s) >= "+limit+" "+resolution.toString());
 		Collections.sort(scans);
 		for(int i=0; i<scans.size(); i++){
 			ScanInfo scan = scans.get(i);
 			long size = scan.size;
 			if(size >= (limit * getResolutionUnit())){
-				print(getRelativePath(scan.path)+" => "+getResolutionValue(size)+" "+resolution.toString()+" ("+scan.folders+" folders, "+scan.files+" files)");
+				print("["+getRelativePath(scan.path)+"] => "+getResolutionValue(size)+" "+resolution.toString()+" ("+scan.folders+" folders, "+scan.files+" files)");
 			}else{
-				print((scans.size() - (i+1))+" more < "+limit+" "+resolution.toString());
+				print(PROMPT+" "+(scans.size() - (i+1))+" folder(s) < "+limit+" "+resolution.toString());
 				break;
 			}
 		}
-		print("done.");
+		print(PROMPT+" done.");
 	}
 
+	private ScanInfo scanFolder(File folder, int level) throws Exception {
+		
+		if(folder != null && folder.isDirectory()){
+			ScanInfo scan = new ScanInfo(folder);
+			if(verbose && level < MAX_LOG_DEPTH){
+				print("["+getRelativePath(scan.path)+"]");
+			}
+			File[] files = folder.listFiles();
+			if(files != null){
+				for(File file : files){
+					if(file.isDirectory() && (full || !file.getName().startsWith("."))){
+						scan.folders++;
+						ScanInfo child = scanFolder(file, level+1);
+						scan.folders += child.folders;
+						scan.files += child.files;
+						scan.size += child.size;
+					}else{
+						long size = file.length();
+						scan.files++;
+						scan.size += size;
+					}
+				}
+			}
+			scans.add(scan);
+			return scan;
+		}else{
+			throw new Exception("Not a folder: "+folder.getAbsolutePath());
+		}
+	}
+	
 	private String getRelativePath(String path) {
 		
 		if(path.equals(folder.getAbsolutePath())){
@@ -134,35 +165,6 @@ public class TreeScan {
 			return 1024 * 1024 * 1024;
 		}
 		throw new Exception("Undefined resolution: "+resolution.toString());
-	}
-
-	private ScanInfo scanFolder(File folder, int level) throws Exception {
-		
-		if(folder != null && folder.isDirectory()){
-			ScanInfo scan = new ScanInfo(folder);
-			if(verbose && level < MAX_LOG_DEPTH){
-				print(getRelativePath(scan.path));
-			}
-			for(File file : folder.listFiles()){
-				if(file != null){
-					if(file.isDirectory() && (full || !file.getName().startsWith("."))){
-						scan.folders++;
-						ScanInfo child = scanFolder(file, level+1);
-						scan.folders += child.folders;
-						scan.files += child.files;
-						scan.size += child.size;
-					}else{
-						long size = file.length();
-						scan.files++;
-						scan.size += size;
-					}
-				}
-			}
-			scans.add(scan);
-			return scan;
-		}else{
-			throw new Exception("Not a folder: "+folder.getAbsolutePath());
-		}
 	}
 	
 	class ScanInfo implements Comparable<ScanInfo> {
