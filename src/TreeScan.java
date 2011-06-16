@@ -136,7 +136,7 @@ public class TreeScan {
 	}
 
 	private ScanInfo scanFolder(File folder) throws Exception {
-		if(folder.isDirectory()){
+		if(folder != null && folder.isDirectory()){
 			ScanInfo scan = new ScanInfo(folder);
 			for(File file : folder.listFiles()){
 				if(file.isDirectory() && (!file.getName().startsWith(".") || full)){
